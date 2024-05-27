@@ -73,16 +73,11 @@ const PutValidation = (video: OutputVideoType) => {
 
 //delete all
 app.delete('/testing/all-data', (req: Request, res: Response) => {
-    // let arr = db.videos;
-    // const arr2 = arr;
-    // arr = [];
-    //
+
     db.videos.length===0
 
     res.status(204).json('All data is deleted');
-// length=0
-    // data into db
-    //
+
 })
 
 //post
@@ -103,11 +98,11 @@ app.post('/videos', (req: Request, res: Response | any) => {
         id: Math.floor(Math.random() * 20),
         title: body.title,
         author: body.author,
-        canBeDownloaded: true,
+        canBeDownloaded: false,
         minAgeRestriction: null,
         createdAt: new Date().toISOString(),
         publicationDate: new Date().toISOString(),
-        availableResolution: [Resolutions.P240],
+        availableResolution: [Resolutions.P240] ,
     }
     db.videos = [...db.videos, newVideo]
 
@@ -158,7 +153,8 @@ app.put('/videos/:id', (req: Request, res: Response | any) => {
         foundVideo.availableResolution= body.availableResolution
 
         res.status(204).json(foundVideo)
-    } else {
+    }
+    else {
         res.status(404).json({errors})
     }
 })
