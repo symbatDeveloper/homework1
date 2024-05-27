@@ -2,31 +2,74 @@ import express from 'express'
 import cors from 'cors'
 import {Request, Response} from 'express'
 import {SETTINGS} from "./settings";
+import {db} from "./db";
+import {InputVideoType, OutputVideoType, Resolutions} from "./video-types";
+import {OutputErrorsType} from "./output-error-types";
+
 
 export const app = express() // создать приложение
 app.use(express.json()) // создание свойств-объектов body и query во всех реквестах
 app.use(cors()) // разрешить любым фронтам делать запросы на наш бэк
 
-const errors = [{}]
 
-
-const db = { // создаём базу данных (пока это просто переменная)
-    videos: [
-        {
-            id: 1,
-            title: "title",
-            author: "author",
-
-        },
-        {
-            id: 2,
-            title: "title2",
-            author: "author2",
-
-        },
-
-    ],
+const errors: OutputErrorsType = { // объект для сбора ошибок
+    errorsMessages: []
 }
+const inputValidation = (video: InputVideoType) => {
+
+    ///title author
+    if (video.title.length > 40 || video.author.length > 20 || typeof video.title !== "string") {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'availableResolution'
+        })
+
+    }
+
+    if (!Array.isArray(video.availableResolution)
+        || video.availableResolution.find(p => !Resolutions[p])
+    ) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'availableResolution'
+        })
+    }
+    return errors
+}
+const PutValidation = (video: OutputVideoType) => {
+
+    if (video.title.length > 40 || video.author.length > 20 || typeof video.title !== "string") {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'availableResolution'
+        })
+
+    }
+    if (typeof  video.canBeDownloaded !== "boolean"){ errors.errorsMessages.push({
+        message: 'error!!!!', field: 'download'
+    })}
+    if ( video.minAgeRestriction !== "null"){
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'age'
+        })
+    }
+    if (typeof video.createdAt !== "string"){
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'created at'
+        })
+    }
+    if (typeof video.publicationDate !== "string"){
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'publication date'
+        })
+    }
+    if (!Array.isArray(video.availableResolution)
+        || video.availableResolution.find(p => !Resolutions[p])
+    ) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'availableResolution'
+        })
+    }
+    return errors
+}
+
 
 //delete all
 app.delete('/testing/all-data', (req: Request, res: Response) => {
@@ -34,34 +77,37 @@ app.delete('/testing/all-data', (req: Request, res: Response) => {
     // const arr2 = arr;
     // arr = [];
     //
-    db.videos.slice(0, db.videos.length)
+    db.videos.length===0
 
     res.status(204).json('All data is deleted');
-
+// length=0
+    // data into db
+    //
 })
 
 //post
 app.post('/videos', (req: Request, res: Response | any) => {
+    const errors = inputValidation(req.body)
+    if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
+        res
+            .status(400)
+            .json(errors)
+        return
+    }
     const videos = db.videos
     const body = req.body;
     //checking
-    if (body.title.length > 40 || body.author > 20 || typeof body.title !== "string") {
-        errors.push({
-            errorsMessages: [
-                {
-                    message: "incorrect",
-                    field: "title"
-                }
-            ]
-        })
-        res.status(400).json({errors})
-        return;
-    }
+
     const newVideo = {
-        ...req.body,
+        //...req.body,
         id: Math.floor(Math.random() * 20),
         title: body.title,
         author: body.author,
+        canBeDownloaded: true,
+        minAgeRestriction: null,
+        createdAt: new Date().toISOString(),
+        publicationDate: new Date().toISOString(),
+        availableResolution: [Resolutions.P240],
     }
     db.videos = [...db.videos, newVideo]
 
@@ -87,34 +133,29 @@ app.get('/videos/:id', (req: Request, res: Response) => {
         res.status(404).json({errors})
     }
 })
-// const videos = db.videos
-// let video = videos.find(v => v.id === +req.params.id)
-// if (video) {
-//     res.status(200).json(video)
-// } else {
-//     res.sendStatus(404)
-// }
 
 //put id
 app.put('/videos/:id', (req: Request, res: Response | any) => {
     const body = req.body;
     //checking
-    if (body.title.length > 40 || body.author > 20 || typeof body.title !== "string") {
-        res.status(400).send({
-            errorsMessages: [
-                {
-                    message: "incorrect",
-                    field: "title"
-                }
-            ]
-        })
-
+    const errors = PutValidation(req.body)
+    if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
+        res
+            .status(400)
+            .json(errors)
+        return
     }
+
     const bodyparam = req.params.id;
     const foundVideo = db.videos.find(fv => fv.id === +bodyparam)
     if (foundVideo) {
          foundVideo.title=body.title;
          foundVideo.author=body.author;
+        foundVideo.canBeDownloaded= body.canBeDownloaded
+        foundVideo.minAgeRestriction= body.minAgeRestriction
+        foundVideo.createdAt= body.createdAt
+        foundVideo.publicationDate= body.publicationDate
+        foundVideo.availableResolution= body.availableResolution
 
         res.status(204).json(foundVideo)
     } else {
@@ -123,31 +164,6 @@ app.put('/videos/:id', (req: Request, res: Response | any) => {
 })
 
 
-// const videos = db.videos // получаем видео из базы данных
-// let title = req.body.title;
-// let author = req.body.author;
-// for (let i = 0; i < videos.length; i++) {
-//
-//     if (videos[i].id == +req.params.id) {
-// const newVideo: VideoDBType = {
-//     ...req.body,
-//     title: title,
-//     author: author,
-//         //availableResolutions: [Resolutions.P240],
-//     }
-//     db.videos = [...videos, newVideo]
-//
-//     res
-//         .status(204)
-//         .json(newVideo)
-//     return;
-// } else {
-//
-//     // res
-//     //     .status(400)
-//     //     .json(errors)
-//     // return;
-// }
 //delete id
 app.delete('/videos/:id', (req: Request, res: Response) => {
     const body = req.params.id;
