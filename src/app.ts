@@ -59,11 +59,11 @@ const PutValidation = (video: OutputVideoType) => {
             message: 'error!!!!', field: 'age'
         })
     }
-    if (!video.createdAt) {
-        errors.errorsMessages.push({
-            message: 'error!!!!', field: 'created at'
-        })
-   }
+   //  if (!video.createdAt) {
+   //      errors.errorsMessages.push({
+   //          message: 'error!!!!', field: 'created at'
+   //      })
+   // }
     if (!video.publicationDate) {
         errors.errorsMessages.push({
             message: 'error!!!!', field: 'publication date'
@@ -111,10 +111,10 @@ app.post('/videos', (req: Request, res: Response,any ) => {
     //checking
     const newVideo = {
          id: body.id ||Number(new Date()) ,
-        title: body.title,
+        title: body.title || null,
         author: body.author,
         canBeDownloaded: false,
-        minAgeRestriction: null,
+        minAgeRestriction: null ,
         createdAt: new Date().toISOString(),
         publicationDate: new Date().toISOString()+1,
         availableResolution: body.availableResolution || null,
@@ -147,13 +147,12 @@ app.get('/videos/:id', (req: Request, res: Response) => {
 //put id
 app.put('/videos/:id', (req: Request, res: Response | any) => {
     const body = req.body;
-    //checking
     const errors = PutValidation(req.body)
     if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
         res
             .status(400)
             .json(errors)
-        return
+
     }
 
     const bodyparam = req.params.id;
@@ -164,7 +163,7 @@ app.put('/videos/:id', (req: Request, res: Response | any) => {
         foundVideo.canBeDownloaded = body.canBeDownloaded
         foundVideo.minAgeRestriction = body.minAgeRestriction
         foundVideo.createdAt = body.createdAt
-        foundVideo.publicationDate = body.publicationDate + 1
+        foundVideo.publicationDate = body.publicationDate
         foundVideo.availableResolution = body.availableResolution
 
         res.status(204).json(foundVideo)
