@@ -96,7 +96,7 @@ exports.app.post('/videos', (req, res, any) => {
         canBeDownloaded: false,
         minAgeRestriction: null,
         createdAt: new Date().toISOString(),
-        publicationDate: new Date().toISOString() + 1,
+        publicationDate: new Date().toISOString(),
         availableResolution: body.availableResolution || null,
     };
     db_1.db.videos.push(newVideo);

@@ -116,7 +116,7 @@ app.post('/videos', (req: Request, res: Response,any ) => {
         canBeDownloaded: false,
         minAgeRestriction: null ,
         createdAt: new Date().toISOString(),
-        publicationDate: new Date().toISOString()+1,
+        publicationDate: new Date().toISOString(),
         availableResolution: body.availableResolution || null,
     }
     db.videos.push(newVideo)
