@@ -96,7 +96,7 @@ exports.app.post('/videos', (req, res, any) => {
         canBeDownloaded: false,
         minAgeRestriction: null,
         createdAt: new Date().toISOString(),
-        publicationDate: new Date().toISOString(),
+        publicationDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
         availableResolution: body.availableResolution || null,
     };
     db_1.db.videos.push(newVideo);
@@ -133,8 +133,8 @@ exports.app.put('/videos/:id', (req, res) => {
         foundVideo.author = body.author;
         foundVideo.canBeDownloaded = body.canBeDownloaded;
         foundVideo.minAgeRestriction = body.minAgeRestriction;
-        foundVideo.createdAt = body.createdAt;
-        foundVideo.publicationDate = body.publicationDate;
+        // foundVideo.createdAt = body.createdAt
+        // foundVideo.publicationDate = body.publicationDate
         foundVideo.availableResolution = body.availableResolution;
         res.status(204).json(foundVideo);
     }
