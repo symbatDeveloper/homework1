@@ -90,16 +90,16 @@ exports.app.post('/videos', (req, res, any) => {
     const body = req.body;
     //checking
     const newVideo = {
-        id: Number(new Date()),
+        id: body.id || Number(new Date()),
         title: body.title,
         author: body.author,
         canBeDownloaded: false,
         minAgeRestriction: null,
         createdAt: new Date().toISOString(),
         publicationDate: new Date().toISOString() + 1,
-        availableResolution: body.availableResolution //|| null,
+        availableResolution: body.availableResolution || null,
     };
-    db_1.db.videos = [...db_1.db.videos, newVideo];
+    db_1.db.videos.push(newVideo);
     res.status(201).json(newVideo);
 });
 //get

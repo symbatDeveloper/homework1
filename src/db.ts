@@ -10,7 +10,7 @@ export const db = { // создаём базу данных (пока это п�
             id: Number(new Date()),
             title: 't' + Math.random(),
             author: 'a' + Math.random(),
-            canBeDownloaded: true,
+            canBeDownloaded: false,
             minAgeRestriction: null,
             createdAt: new Date().toISOString(),
             publicationDate: new Date().toISOString(),
