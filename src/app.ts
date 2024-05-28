@@ -18,55 +18,72 @@ const errors: OutputErrorsType = { // объект для сбора ошибо�
 const inputValidation = (video: InputVideoType) => {
 
     ///title author
-    if (video.title.length > 40 || video.author.length > 20 || typeof video.title !== "string") {
+    if (video.title.length > 40 || video.author.length > 20 ) {
         errors.errorsMessages.push({
             message: 'error!!!!', field: 'availableResolution'
         })
 
     }
+    if (video.availableResolution) {
+        const validResolutionsKeys = Object.keys(Resolutions);
 
-    if (!Array.isArray(video.availableResolution)
-        || video.availableResolution.find(p => !Resolutions[p])
-    ) {
-        errors.errorsMessages.push({
-            message: 'error!!!!', field: 'availableResolution'
-        })
-    }
+        const invalidResolutions = video.availableResolution.filter(
+            (res: string) => !validResolutionsKeys.includes(res),
+        );
+
+   }
+    // if (!Array.isArray(video.availableResolution)
+    //     || video.availableResolution.find(p => !Resolutions[p])
+    // ) {
+    //     errors.errorsMessages.push({
+    //         message: 'error!!!!', field: 'availableResolution'
+    //     })
+    // }
     return errors
 }
 const PutValidation = (video: OutputVideoType) => {
 
-    if (video.title.length > 40 || video.author.length > 20 || typeof video.title !== "string") {
+    if (video.title.length > 40 || video.author.length > 20 ) {
         errors.errorsMessages.push({
-            message: 'error!!!!', field: 'availableResolution'
+            message: 'error!!!!', field: 'title put'
         })
 
     }
-    if (typeof  video.canBeDownloaded !== "boolean"){ errors.errorsMessages.push({
-        message: 'error!!!!', field: 'download'
-    })}
-    if ( video.minAgeRestriction !== "null"){
+    if (!video.canBeDownloaded) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'download'
+        })
+    }
+    if (!video.minAgeRestriction) {
         errors.errorsMessages.push({
             message: 'error!!!!', field: 'age'
         })
     }
-    if (typeof video.createdAt !== "string"){
+    if (!video.createdAt) {
         errors.errorsMessages.push({
             message: 'error!!!!', field: 'created at'
         })
-    }
-    if (typeof video.publicationDate !== "string"){
+   }
+    if (!video.publicationDate) {
         errors.errorsMessages.push({
             message: 'error!!!!', field: 'publication date'
         })
     }
-    if (!Array.isArray(video.availableResolution)
-        || video.availableResolution.find(p => !Resolutions[p])
-    ) {
-        errors.errorsMessages.push({
-            message: 'error!!!!', field: 'availableResolution'
-        })
+    if (video.availableResolution) {
+        const validResolutionsKeys = Object.keys(Resolutions);
+
+        const invalidResolutions = video.availableResolution.filter(
+            (res: string) => !validResolutionsKeys.includes(res),
+        );
+
     }
+    // if (!Array.isArray(video.availableResolution)
+    //     || video.availableResolution.find(p => !Resolutions[p])
+    // ) {
+    //     errors.errorsMessages.push({
+    //         message: 'error!!!!', field: 'availableResolution Put'
+    //     })
+    // }
     return errors
 }
 
@@ -74,14 +91,14 @@ const PutValidation = (video: OutputVideoType) => {
 //delete all
 app.delete('/testing/all-data', (req: Request, res: Response) => {
 
-    db.videos.length===0
+    db.videos.length === 0
 
     res.status(204).json('All data is deleted');
 
 })
 
 //post
-app.post('/videos', (req: Request, res: Response | any) => {
+app.post('/videos', (req: Request, res: Response,any ) => {
     const errors = inputValidation(req.body)
     if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
         res
@@ -89,20 +106,18 @@ app.post('/videos', (req: Request, res: Response | any) => {
             .json(errors)
         return
     }
-    const videos = db.videos
+
     const body = req.body;
     //checking
-
     const newVideo = {
-        //...req.body,
-        id: Math.floor(Math.random() * 20),
+         id: Number(new Date()),
         title: body.title,
         author: body.author,
         canBeDownloaded: false,
         minAgeRestriction: null,
         createdAt: new Date().toISOString(),
-        publicationDate: new Date().toISOString(),
-        availableResolution: [Resolutions.P240] ,
+        publicationDate: new Date().toISOString()+1,
+        availableResolution: body.availableResolution //|| null,
     }
     db.videos = [...db.videos, newVideo]
 
@@ -123,7 +138,7 @@ app.get('/videos/:id', (req: Request, res: Response) => {
     const foundVideo = db.videos.find(fv => fv.id === +body)
     if (foundVideo) {
         res.status(200).json(foundVideo);
-        return
+
     } else {
         res.status(404).json({errors})
     }
@@ -144,17 +159,16 @@ app.put('/videos/:id', (req: Request, res: Response | any) => {
     const bodyparam = req.params.id;
     const foundVideo = db.videos.find(fv => fv.id === +bodyparam)
     if (foundVideo) {
-         foundVideo.title=body.title;
-         foundVideo.author=body.author;
-        foundVideo.canBeDownloaded= body.canBeDownloaded
-        foundVideo.minAgeRestriction= body.minAgeRestriction
-        foundVideo.createdAt= body.createdAt
-        foundVideo.publicationDate= body.publicationDate
-        foundVideo.availableResolution= body.availableResolution
+        foundVideo.title = body.title;
+        foundVideo.author = body.author;
+        foundVideo.canBeDownloaded = body.canBeDownloaded
+        foundVideo.minAgeRestriction = body.minAgeRestriction
+        foundVideo.createdAt = body.createdAt
+        foundVideo.publicationDate = body.publicationDate + 1
+        foundVideo.availableResolution = body.availableResolution
 
         res.status(204).json(foundVideo)
-    }
-    else {
+    } else {
         res.status(404).json({errors})
     }
 })
@@ -170,7 +184,7 @@ app.delete('/videos/:id', (req: Request, res: Response) => {
                 db.videos.slice(i, 1);
                 res.sendStatus(204)
             }
-            return
+
         }
     } else {
         res.status(404).json({errors})

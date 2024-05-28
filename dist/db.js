@@ -1,10 +1,10 @@
-import {Resolutions} from "./video-types";
-import any = jasmine.any;
-
-export const errors = [{}]
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.db = exports.errors = void 0;
+const video_types_1 = require("./video-types");
+exports.errors = [{}];
 //
-export const db = { // создаём базу данных (пока это просто переменная)
+exports.db = {
     videos: [
         {
             id: Number(new Date()),
@@ -14,10 +14,7 @@ export const db = { // создаём базу данных (пока это п�
             minAgeRestriction: null,
             createdAt: new Date().toISOString(),
             publicationDate: new Date().toISOString(),
-            availableResolution: [Resolutions.P240],
-
+            availableResolution: [video_types_1.Resolutions.P240],
         }
-
-
     ],
-}
+};

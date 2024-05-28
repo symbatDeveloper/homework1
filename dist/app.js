@@ -6,138 +6,154 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = void 0;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
+const db_1 = require("./db");
+const video_types_1 = require("./video-types");
 exports.app = (0, express_1.default)(); // создать приложение
 exports.app.use(express_1.default.json()); // создание свойств-объектов body и query во всех реквестах
 exports.app.use((0, cors_1.default)()); // разрешить любым фронтам делать запросы на наш бэк
-const errors = [{}];
-const db = {
-    videos: [
-        {
-            id: 1,
-            title: "title",
-            author: "author",
-        },
-        {
-            id: 2,
-            title: "title2",
-            author: "author2",
-        },
-    ],
+const errors = {
+    errorsMessages: []
+};
+const inputValidation = (video) => {
+    ///title author
+    if (video.title.length > 40 || video.author.length > 20) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'availableResolution'
+        });
+    }
+    if (video.availableResolution) {
+        const validResolutionsKeys = Object.keys(video_types_1.Resolutions);
+        const invalidResolutions = video.availableResolution.filter((res) => !validResolutionsKeys.includes(res));
+    }
+    // if (!Array.isArray(video.availableResolution)
+    //     || video.availableResolution.find(p => !Resolutions[p])
+    // ) {
+    //     errors.errorsMessages.push({
+    //         message: 'error!!!!', field: 'availableResolution'
+    //     })
+    // }
+    return errors;
+};
+const PutValidation = (video) => {
+    if (video.title.length > 40 || video.author.length > 20) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'title put'
+        });
+    }
+    if (!video.canBeDownloaded) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'download'
+        });
+    }
+    if (!video.minAgeRestriction) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'age'
+        });
+    }
+    if (!video.createdAt) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'created at'
+        });
+    }
+    if (!video.publicationDate) {
+        errors.errorsMessages.push({
+            message: 'error!!!!', field: 'publication date'
+        });
+    }
+    if (video.availableResolution) {
+        const validResolutionsKeys = Object.keys(video_types_1.Resolutions);
+        const invalidResolutions = video.availableResolution.filter((res) => !validResolutionsKeys.includes(res));
+    }
+    // if (!Array.isArray(video.availableResolution)
+    //     || video.availableResolution.find(p => !Resolutions[p])
+    // ) {
+    //     errors.errorsMessages.push({
+    //         message: 'error!!!!', field: 'availableResolution Put'
+    //     })
+    // }
+    return errors;
 };
 //delete all
 exports.app.delete('/testing/all-data', (req, res) => {
-    // let arr = db.videos;
-    // const arr2 = arr;
-    // arr = [];
-    //
-    db.videos.slice(0, db.videos.length);
+    db_1.db.videos.length === 0;
     res.status(204).json('All data is deleted');
 });
 //post
-exports.app.post('/videos', (req, res) => {
-    const videos = db.videos;
-    const body = req.body;
-    //checking
-    if (body.title.length > 40 || body.author > 20 || typeof body.title !== "string") {
-        errors.push({
-            errorsMessages: [
-                {
-                    message: "incorrect",
-                    field: "title"
-                }
-            ]
-        });
-        res.status(400).json({ errors });
+exports.app.post('/videos', (req, res, any) => {
+    const errors = inputValidation(req.body);
+    if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
+        res
+            .status(400)
+            .json(errors);
         return;
     }
-    const newVideo = Object.assign(Object.assign({}, req.body), { id: Math.floor(Math.random() * 20), title: body.title, author: body.author });
-    db.videos = [...db.videos, newVideo];
+    const body = req.body;
+    //checking
+    const newVideo = {
+        id: Number(new Date()),
+        title: body.title,
+        author: body.author,
+        canBeDownloaded: false,
+        minAgeRestriction: null,
+        createdAt: new Date().toISOString(),
+        publicationDate: new Date().toISOString() + 1,
+        availableResolution: body.availableResolution //|| null,
+    };
+    db_1.db.videos = [...db_1.db.videos, newVideo];
     res.status(201).json(newVideo);
 });
 //get
 exports.app.get('/videos', (req, res) => {
-    res.status(200).json(db.videos);
+    res.status(200).json(db_1.db.videos);
 });
 //get by id
 exports.app.get('/videos/:id', (req, res) => {
     const body = req.params.id;
-    const foundVideo = db.videos.find(fv => fv.id === +body);
+    const foundVideo = db_1.db.videos.find(fv => fv.id === +body);
     if (foundVideo) {
         res.status(200).json(foundVideo);
-        return;
     }
     else {
         res.status(404).json({ errors });
     }
 });
-// const videos = db.videos
-// let video = videos.find(v => v.id === +req.params.id)
-// if (video) {
-//     res.status(200).json(video)
-// } else {
-//     res.sendStatus(404)
-// }
 //put id
 exports.app.put('/videos/:id', (req, res) => {
     const body = req.body;
     //checking
-    if (body.title.length > 40 || body.author > 20 || typeof body.title !== "string") {
-        res.status(400).send({
-            errorsMessages: [
-                {
-                    message: "incorrect",
-                    field: "title"
-                }
-            ]
-        });
+    const errors = PutValidation(req.body);
+    if (errors.errorsMessages.length) { // если есть ошибки - отправляем ошибки
+        res
+            .status(400)
+            .json(errors);
+        return;
     }
     const bodyparam = req.params.id;
-    const foundVideo = db.videos.find(fv => fv.id === +bodyparam);
+    const foundVideo = db_1.db.videos.find(fv => fv.id === +bodyparam);
     if (foundVideo) {
         foundVideo.title = body.title;
         foundVideo.author = body.author;
+        foundVideo.canBeDownloaded = body.canBeDownloaded;
+        foundVideo.minAgeRestriction = body.minAgeRestriction;
+        foundVideo.createdAt = body.createdAt;
+        foundVideo.publicationDate = body.publicationDate + 1;
+        foundVideo.availableResolution = body.availableResolution;
         res.status(204).json(foundVideo);
     }
     else {
         res.status(404).json({ errors });
     }
 });
-// const videos = db.videos // получаем видео из базы данных
-// let title = req.body.title;
-// let author = req.body.author;
-// for (let i = 0; i < videos.length; i++) {
-//
-//     if (videos[i].id == +req.params.id) {
-// const newVideo: VideoDBType = {
-//     ...req.body,
-//     title: title,
-//     author: author,
-//         //availableResolutions: [Resolutions.P240],
-//     }
-//     db.videos = [...videos, newVideo]
-//
-//     res
-//         .status(204)
-//         .json(newVideo)
-//     return;
-// } else {
-//
-//     // res
-//     //     .status(400)
-//     //     .json(errors)
-//     // return;
-// }
 //delete id
 exports.app.delete('/videos/:id', (req, res) => {
     const body = req.params.id;
-    const foundVideo = db.videos.find(fv => fv.id === +body);
+    const foundVideo = db_1.db.videos.find(fv => fv.id === +body);
     if (foundVideo) {
-        for (let i = 0; i < db.videos.length; i++) {
-            if (db.videos[i].id == +req.params.id) {
-                db.videos.slice(i, 1);
+        for (let i = 0; i < db_1.db.videos.length; i++) {
+            if (db_1.db.videos[i].id == +req.params.id) {
+                db_1.db.videos.slice(i, 1);
                 res.sendStatus(204);
             }
-            return;
         }
     }
     else {

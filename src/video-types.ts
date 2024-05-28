@@ -8,20 +8,20 @@ export enum Resolutions {
     P1440 = 'P1440',
     P2160 = 'P2160',
 }
-
 export type ResolutionsString = keyof typeof Resolutions
+
 // const x = Resolutions.P144
 // const y = Resolutions[x]
 // const z = Resolutions['P144']
 
 export type OutputVideoType = {
-    id: number
-    title: string
-    author: string
-    canBeDownloaded: boolean
-    minAgeRestriction: null
-    createdAt: string
-    publicationDate: string
+    id: number,
+    title: string,
+    author: string,
+    canBeDownloaded: boolean,
+    minAgeRestriction: null | number,
+    createdAt: string,
+    publicationDate: string,
     availableResolution: Resolutions[]
 }
 
